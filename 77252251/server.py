@@ -2,13 +2,13 @@
 '''
 simple webserver for testing mitmproxy
 '''
-import io, logging  # pylint: disable=multiple-imports
+import os, io, logging  # pylint: disable=multiple-imports
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.WARNING)
 
 DATA = {
-    countdown: ['5', '4', '3', '2', '1', 'BOOM!'],
-    counter: 0
+    'countdown': ['5', '4', '3', '2', '1', 'BOOM!'],
+    'count': 0
 }
 
 class CountdownHTTPRequestHandler(SimpleHTTPRequestHandler):
@@ -19,14 +19,18 @@ class CountdownHTTPRequestHandler(SimpleHTTPRequestHandler):
         '''
         usurp list_directory to provide countdown for requests for '/'
         '''
-        logging.debug('handling request %d', DATA[counter])
-        response = DATA.countdown[DATA[counter]].encode('utf-8')
-        DATA.counter += 1
-        self.send_response(HTTPStatus.OK)
-        self.send_header('content-type:', 'text/plain')
-        self.send_header('content-length', str(len(response)))
-        self.end_headers()
-        return io.BytesIO(response)
+        logging.debug('handling request %d', DATA['count'])
+        try:
+            response = (DATA['countdown'][DATA['count']] + os.linesep).encode()
+            DATA['count'] += 1
+            self.send_response(HTTPStatus.OK)
+            self.send_header('content-type:', 'text/plain')
+            self.send_header('content-length', str(len(response)))
+            self.end_headers()
+            return io.BytesIO(response)
+        except IndexError as done:
+            logging.info('done, exiting')
+            raise KeyboardInterrupt('server saying goodbye') from done
 
 if __name__ == '__main__':
     serve(HandlerClass=CountdownHTTPRequestHandler)

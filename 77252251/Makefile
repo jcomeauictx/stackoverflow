@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 SOURCES := $(wildcard *.py)
 LINT := $(SOURCES:.py=.pylint)
 TEST := $(SOURCES:.py=.doctest)
@@ -8,6 +9,12 @@ DOCTEST := $(PYTHON) -m doctest
 	$(PYLINT) $<
 %.doctest: %.py
 	$(DOCTEST) $<
-all: $(LINT) $(TEST) serve
+all: $(LINT) $(TEST) serve wait test
+fast: serve test
 serve: server.py
-	$(PYTHON) $<
+	$(PYTHON) $< &
+wait:
+	@echo giving server a chance to start...
+	@sleep 1
+test:
+	for try in $$(seq 0 6); do wget -q -O- http://localhost:8000/; done
