@@ -9,7 +9,7 @@ DOCTEST := $(PYTHON) -m doctest
 	$(PYLINT) $<
 %.doctest: %.py
 	$(DOCTEST) $<
-all: $(LINT) $(TEST) serve wait test stop
+all: $(LINT) $(TEST) serve proxy wait test stop
 fast: serve test
 serve: server.py
 	$(PYTHON) $< &
@@ -19,4 +19,12 @@ wait:
 test:
 	for try in $$(seq 0 5); do wget -q -O- http://localhost:8000/; done
 stop:
-	kill $$(lsof -t -itcp:8000 -s tcp:listen)
+	-kill $$(lsof -t -itcp:8080 -s tcp:listen)  # kill mitmdump
+	-kill $$(lsof -t -itcp:8000 -s tcp:listen)  # kill webserver
+proxy:
+	mitmdump --anticache \
+	 --anticomp \
+	 --listen-host localhost \
+	 --scripts filter.py \
+	 --flow-detail 3 \
+	 --save-stream-file mitmproxy.log &>mitmdump.log &
