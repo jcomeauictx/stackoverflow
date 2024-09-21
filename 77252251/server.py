@@ -28,9 +28,9 @@ class CountdownHTTPRequestHandler(SimpleHTTPRequestHandler):
             self.send_header('content-length', str(len(response)))
             self.end_headers()
             return io.BytesIO(response)
-        except IndexError as done:
-            logging.info('done, exiting')
-            raise KeyboardInterrupt('server saying goodbye') from done
+        except IndexError:
+            logging.info('demo is complete')
+            return None
 
 if __name__ == '__main__':
     serve(HandlerClass=CountdownHTTPRequestHandler)
