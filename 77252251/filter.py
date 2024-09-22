@@ -42,8 +42,8 @@ def response(flow: http.HTTPFlow):
         SAVED['response'].response.content += flow.response.content
         SAVED['count'] += 1
     if SAVED['count'] == COPIES:
-        flow.response = SAVED['response']
-        logging.warning('returning response to client')
+        flow = SAVED['response']
+        logging.warning('returning response %s to client', flow)
     else:
         logging.warning('killing flow at count %d', SAVED['count'])
         flow.kill()
