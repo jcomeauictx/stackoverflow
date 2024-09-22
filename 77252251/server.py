@@ -30,6 +30,7 @@ class CountdownHTTPRequestHandler(SimpleHTTPRequestHandler):
             return io.BytesIO(response)
         except IndexError:
             logging.info('demo is complete')
+            DATA['count'] = 0  # reset to zero
             return None
 
 if __name__ == '__main__':

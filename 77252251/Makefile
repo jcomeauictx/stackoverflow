@@ -5,6 +5,8 @@ TEST := $(SOURCES:.py=.doctest)
 PYTHON := $(shell which python3 python false | head -n 1)
 PYLINT := $(shell which pylint3 pylint true | head -n 1)
 DOCTEST := $(PYTHON) -m doctest
+PROXY := localhost:8080
+WGET := http_proxy=$(PROXY) wget -q -O- 
 %.pylint: %.py
 	$(PYLINT) $<
 %.doctest: %.py
@@ -14,14 +16,15 @@ fast: serve test
 serve: server.py
 	$(PYTHON) $< &
 wait:
-	@echo giving server a chance to start...
+	@echo giving server and/or mitmproxy a chance to start...
 	@sleep 1
 test:
-	for try in $$(seq 0 5); do wget -q -O- http://localhost:8000/; done
+	-for try in $$(seq 0 5); do $(WGET) http://localhost:8000/; done
 stop:
 	-kill $$(lsof -t -itcp:8080 -s tcp:listen)  # kill mitmdump
 	-kill $$(lsof -t -itcp:8000 -s tcp:listen)  # kill webserver
 proxy:
+	# mitmdump using default listen-port 8080
 	mitmdump --anticache \
 	 --anticomp \
 	 --listen-host localhost \
