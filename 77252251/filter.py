@@ -27,7 +27,7 @@ def request(flow: http.HTTPFlow):
             copy = SAVED['request'].copy()
             if 'view' in ctx.master.addons:
                 ctx.master.commands.call('views.flows.duplicate', [copy])
-            copy.request.path += ('?copy=%d' % index + 1)
+            copy.request.path += ('?copy=%d' % (index + 1))
             ctx.master.commands.call('replay.client', [copy])
 
 def response(flow: http.HTTPFlow):
@@ -43,5 +43,7 @@ def response(flow: http.HTTPFlow):
         SAVED['count'] += 1
     if SAVED['count'] == COPIES:
         flow.response = SAVED['response']
+        logging.debug('returning response to client')
     else:
+        logging.debug('killing flow at count %d', SAVED['count'])
         flow.kill()

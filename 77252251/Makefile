@@ -19,7 +19,7 @@ wait:
 	@echo giving server and/or mitmproxy a chance to start...
 	@sleep 1
 test:
-	-for try in $$(seq 0 5); do $(WGET) http://localhost:8000/; done
+	-$(WGET) http://localhost:8000/
 stop:
 	-kill $$(lsof -t -itcp:8080 -s tcp:listen)  # kill mitmdump
 	-kill $$(lsof -t -itcp:8000 -s tcp:listen)  # kill webserver
