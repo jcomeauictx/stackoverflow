@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-PATH := /bin:/usr/bin:/usr/local/bin
+PATH := /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 SOURCES := $(wildcard *.py)
 LINT := $(SOURCES:.py=.pylint)
 TEST := $(SOURCES:.py=.doctest)
@@ -11,6 +11,8 @@ PROXY := localhost:8080
 WGET := http_proxy=$(PROXY) wget -q -O- 
 ifneq ($(SHOWENV),)
  export
+else
+ export PATH
 endif
 %.pylint: %.py
 	$(PYLINT) $<
