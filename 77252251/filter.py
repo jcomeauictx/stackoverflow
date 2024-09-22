@@ -44,8 +44,4 @@ def response(flow: http.HTTPFlow):
     if SAVED['count'] == COPIES:
         flow.response = SAVED['response']
     else:
-        flow.response = http.Response.make(
-            103,
-            b'Processing',
-            {'content-type': 'text/plain'}
-        )
+        flow.kill()
