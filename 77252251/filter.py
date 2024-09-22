@@ -19,7 +19,7 @@ def request(flow: http.HTTPFlow):
     '''
     filter requests; send COPIES more upstream for every one received
     '''
-    logging.debug('request for path: %s, replay: %s',
+    logging.warning('request for path: %s, replay: %s',
                   flow.request.path, flow.is_replay)
     if SAVED['request'] is None:
         SAVED['request'] = flow.copy()
@@ -34,7 +34,7 @@ def response(flow: http.HTTPFlow):
     '''
     filter responses
     '''
-    logging.debug('response for path: %s, replay: %s',
+    logging.warning('response for path: %s, replay: %s',
                   flow.request.path, flow.is_replay)
     if SAVED['response'] is None:
         SAVED['response'] = flow
@@ -43,7 +43,7 @@ def response(flow: http.HTTPFlow):
         SAVED['count'] += 1
     if SAVED['count'] == COPIES:
         flow.response = SAVED['response']
-        logging.debug('returning response to client')
+        logging.warning('returning response to client')
     else:
-        logging.debug('killing flow at count %d', SAVED['count'])
+        logging.warning('killing flow at count %d', SAVED['count'])
         flow.kill()

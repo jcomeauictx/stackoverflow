@@ -14,7 +14,7 @@ WGET := http_proxy=$(PROXY) wget -q -O-
 all: $(LINT) $(TEST) serve proxy wait test stop
 fast: serve test
 serve: server.py
-	$(PYTHON) $< &
+	$(PYTHON) $< 2>&1 | tee server.log &
 wait:
 	@echo giving server and/or mitmproxy a chance to start...
 	@sleep 1
