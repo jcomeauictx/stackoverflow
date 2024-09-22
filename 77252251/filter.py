@@ -5,8 +5,10 @@ test multiple server queries for single client query
 import logging
 try:
     from mitmproxy import http, ctx
+    from mitmproxy.script import concurrent
 except (ImportError, ModuleNotFoundError):  # for doctests
     http = type('', (), {'HTTPFlow': None})  # pylint: disable=invalid-name
+    concurrent = type('', (), {})  # pylint: disable=invalid-name
 SAVED = {
     'request': None,
     'response': None,
@@ -15,6 +17,7 @@ SAVED = {
 COPIES = 5
 
 # pylint: disable=consider-using-f-string
+@concurrent
 def request(flow: http.HTTPFlow):
     '''
     filter requests; send COPIES more upstream for every one received
