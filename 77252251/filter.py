@@ -7,8 +7,13 @@ try:
     from mitmproxy import http, ctx
     from mitmproxy.script import concurrent
 except (ImportError, ModuleNotFoundError):  # for doctests
-    http = type('', (), {'HTTPFlow': None})  # pylint: disable=invalid-name
-    concurrent = type('', (), {})  # pylint: disable=invalid-name
+    logging.warning('simulating mitmproxy for doctests')
+    # pylint: disable=invalid-name
+    http = type('', (), {'HTTPFlow': None})
+    ctx = type('', (), {})
+    def concurrent(function):  # pylint: disable=unused-argument
+        'simulated decorator'
+        return None
 SAVED = {
     'request': None,
     'response': None,
