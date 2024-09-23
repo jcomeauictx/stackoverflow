@@ -18,6 +18,13 @@ except (ImportError, ModuleNotFoundError):  # for doctests
     http = type('', (), {'HTTPFlow': None})
     ctx = type('', (), {})
 
+STRATEGIES = ['redirect', 'copyflow']
+STATE = {
+    # global for saved state
+    'index': 0,  # increment to try different strategies
+    'strategy': STRATEGIES[0],
+}
+
 # pylint: disable=consider-using-f-string
 def request(flow: http.HTTPFlow):
     '''
@@ -38,8 +45,13 @@ def response(flow: http.HTTPFlow):
         logging.warning('returning response %s to client', oneline(flow))
         # remove timestamp
         flow.request.path = timestamp(flow.request.path, remove=True)
-        # pylint: disable=fixme
-        ctx.master.shutdown()  # FIXME: just during testing
+    elif STATE['strategy'] == 'redirect':
+        redirect = timestamp(flow.request.path)
+        flow.response = http.Response.make(
+            HTTPStatus.FOUND,
+            '<a href="%s">%s</a>' % (redirect, redirect),
+            {'content-type': 'text/html', 'location': redirect}
+        )
     else:
         copy = flow.copy()
         copy.response = None
@@ -49,12 +61,8 @@ def response(flow: http.HTTPFlow):
         copy.request.path = timestamp(copy.request.path)
         ctx.master.commands.call('replay.client', [copy])
         # killing flow at this point will cause client to shut down.
-        # we could instead try `.intercept()`, or send a redirect
-        flow.response = http.Response.make(
-            HTTPStatus.FOUND,
-            'trying again',
-            {'content-type': 'text/plain'}
-        )
+        # we could instead try `.intercept()`
+        flow.intercept()
 
 def timestamp(path, remove=False):
     '''
