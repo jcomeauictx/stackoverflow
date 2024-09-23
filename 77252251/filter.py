@@ -5,15 +5,11 @@ test multiple server queries for single client query
 import logging
 try:
     from mitmproxy import http, ctx
-    from mitmproxy.script import concurrent
 except (ImportError, ModuleNotFoundError):  # for doctests
     logging.warning('simulating mitmproxy for doctests')
     # pylint: disable=invalid-name
     http = type('', (), {'HTTPFlow': None})
     ctx = type('', (), {})
-    def concurrent(function):  # pylint: disable=unused-argument
-        'simulated decorator'
-        return None
 SAVED = {
     'request': None,
     'response': None,
@@ -22,7 +18,6 @@ SAVED = {
 COPIES = 5
 
 # pylint: disable=consider-using-f-string
-@concurrent
 def request(flow: http.HTTPFlow):
     '''
     filter requests; send COPIES more upstream for every one received
@@ -34,6 +29,7 @@ def request(flow: http.HTTPFlow):
         for index in range(COPIES):
             copy = SAVED['request'].copy()
             if 'view' in ctx.master.addons:
+                logging.warning('duplicating flow in view')
                 ctx.master.commands.call('views.flows.duplicate', [copy])
             copy.request.path += ('?copy=%d' % (index + 1))
             ctx.master.commands.call('replay.client', [copy])
