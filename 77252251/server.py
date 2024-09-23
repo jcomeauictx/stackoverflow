@@ -23,15 +23,19 @@ class CountdownHTTPRequestHandler(SimpleHTTPRequestHandler):
         try:
             response = (DATA['countdown'][DATA['count']] + os.linesep).encode()
             DATA['count'] += 1
-            self.send_response(HTTPStatus.OK)
-            self.send_header('content-type:', 'text/plain')
+            self.send_response(HTTPStatus.OK, 'counting down')
+            self.send_header('content-type', 'text/plain')
             self.send_header('content-length', str(len(response)))
             self.end_headers()
             return io.BytesIO(response)
         except IndexError:
-            logging.info('demo is complete')
+            response = b'try again'
             DATA['count'] = 0  # reset to zero
-            return None
+            self.send_response(HTTPStatus.CONTINUE, 'demo complete')
+            self.send_header('content-type', 'text/plain')
+            self.send_header('content-length', str(len(response)))
+            self.end_headers()
+            return io.BytesIO(response)
 
 if __name__ == '__main__':
     serve(HandlerClass=CountdownHTTPRequestHandler)
