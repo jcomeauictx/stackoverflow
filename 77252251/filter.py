@@ -24,6 +24,7 @@ def request(flow: http.HTTPFlow):
     '''
     logging.warning('request for path: %s, replay: %s',
                   flow.request.path, flow.is_replay)
+    logging.warning('flow: %s', oneline(flow))
 
 def response(flow: http.HTTPFlow):
     '''
@@ -31,8 +32,9 @@ def response(flow: http.HTTPFlow):
     '''
     logging.warning('response for path: %s, replay: %s',
                   flow.request.path, flow.is_replay)
+    logging.warning('flow: %s', oneline(flow))
     if len(flow.response.content.rstrip()) > 1:
-        logging.warning('returning response %s to client', flow)
+        logging.warning('returning response %s to client', oneline(flow))
         # remove timestamp
         flow.request.path = timestamp(flow.request.path, remove=True)
         # pylint: disable=fixme
@@ -56,3 +58,10 @@ def timestamp(path, remove=False):
     if not remove:
         path += '?timestamp=%.3f' % time.time()
     return path
+
+def oneline(something):
+    '''
+    return potentially-multiline string as a single line
+    '''
+    string = str(something)
+    return string.replace('\n', '').replace('\r', '')
