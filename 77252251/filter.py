@@ -1,6 +1,12 @@
 #!/usr/bin/python3 -OO
 '''
 test multiple server queries for single client query
+
+try using replay: flow.is_replay can be None, "request", or "response"; it
+cannot be "both".
+
+try using urllib.request.urlopen: it returns an http.client.HTTPResponse
+object which can then be .read().
 '''
 import logging
 try:
