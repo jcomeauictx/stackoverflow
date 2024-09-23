@@ -8,7 +8,7 @@ PYLINT := $(shell which pylint3 pylint true | head -n 1)
 MITMDUMP := $(shell which mitmdump false | head -n 1)
 DOCTEST := $(PYTHON) -m doctest
 PROXY := localhost:8080
-WGET := http_proxy=$(PROXY) wget -q -O- 
+WGET := http_proxy=$(PROXY) wget -v -O-
 ifneq ($(SHOWENV),)
  export
 else

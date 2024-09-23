@@ -33,13 +33,26 @@ def response(flow: http.HTTPFlow):
                   flow.request.path, flow.is_replay)
     if len(flow.response.content.rstrip()) > 1:
         logging.warning('returning response %s to client', flow)
+        # remove timestamp
+        flow.request.path = timestamp(flow.request.path, remove=True)
+        # pylint: disable=fixme
+        ctx.master.shutdown()  # FIXME: just during testing
     else:
         copy = flow.copy()
         copy.response = None
         if 'view' in ctx.master.addons:
             logging.warning('duplicating flow in view')
             ctx.master.commands.call('views.flows.duplicate', [copy])
-        copy.request.path += ('?timestamp=%.3f' % time.time())
+        copy.request.path = timestamp(copy.request.path)
         ctx.master.commands.call('replay.client', [copy])
         logging.warning('killing flow for "wrong" answer')
         flow.kill()
+
+def timestamp(path, remove=False):
+    '''
+    append (or discard) timestamp to path for helping to troubleshoot
+    '''
+    path = path.split('?')[0]
+    if not remove:
+        path += '?timestamp=%.3f' % time.time()
+    return path
