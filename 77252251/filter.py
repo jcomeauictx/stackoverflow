@@ -9,6 +9,7 @@ try using urllib.request.urlopen: it returns an http.client.HTTPResponse
 object which can then be .read().
 '''
 import time, logging  # pylint: disable=multiple-imports
+from http import HTTPStatus
 try:
     from mitmproxy import http, ctx
 except (ImportError, ModuleNotFoundError):  # for doctests
@@ -47,8 +48,13 @@ def response(flow: http.HTTPFlow):
             ctx.master.commands.call('views.flows.duplicate', [copy])
         copy.request.path = timestamp(copy.request.path)
         ctx.master.commands.call('replay.client', [copy])
-        logging.warning('killing flow for "wrong" answer')
-        flow.kill()
+        # killing flow at this point will cause client to shut down.
+        # we could instead try `.intercept()`, or send a redirect
+        flow.response = http.Response.make(
+            HTTPStatus.FOUND,
+            'trying again',
+            {'content-type': 'text/plain'}
+        )
 
 def timestamp(path, remove=False):
     '''
