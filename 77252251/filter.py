@@ -8,7 +8,7 @@ cannot be "both".
 try using urllib.request.urlopen: it returns an http.client.HTTPResponse
 object which can then be .read().
 '''
-import logging
+import time, logging  # pylint: disable=multiple-imports
 try:
     from mitmproxy import http, ctx
 except (ImportError, ModuleNotFoundError):  # for doctests
@@ -16,29 +16,14 @@ except (ImportError, ModuleNotFoundError):  # for doctests
     # pylint: disable=invalid-name
     http = type('', (), {'HTTPFlow': None})
     ctx = type('', (), {})
-SAVED = {
-    'request': None,
-    'response': None,
-    'count': 0
-}
-COPIES = 5
 
 # pylint: disable=consider-using-f-string
 def request(flow: http.HTTPFlow):
     '''
-    filter requests; send COPIES more upstream for every one received
+    filter requests
     '''
     logging.warning('request for path: %s, replay: %s',
                   flow.request.path, flow.is_replay)
-    if SAVED['request'] is None:
-        SAVED['request'] = flow.copy()
-        for index in range(COPIES):
-            copy = SAVED['request'].copy()
-            if 'view' in ctx.master.addons:
-                logging.warning('duplicating flow in view')
-                ctx.master.commands.call('views.flows.duplicate', [copy])
-            copy.request.path += ('?copy=%d' % (index + 1))
-            ctx.master.commands.call('replay.client', [copy])
 
 def response(flow: http.HTTPFlow):
     '''
@@ -46,14 +31,15 @@ def response(flow: http.HTTPFlow):
     '''
     logging.warning('response for path: %s, replay: %s',
                   flow.request.path, flow.is_replay)
-    if SAVED['response'] is None:
-        SAVED['response'] = flow
-    else:
-        SAVED['response'].response.content += flow.response.content
-        SAVED['count'] += 1
-    if SAVED['count'] == COPIES:
-        flow = SAVED['response']
+    if len(flow.response.content.rstrip()) > 1:
         logging.warning('returning response %s to client', flow)
     else:
-        logging.warning('killing flow at count %d', SAVED['count'])
+        copy = flow.copy()
+        copy.response = None
+        if 'view' in ctx.master.addons:
+            logging.warning('duplicating flow in view')
+            ctx.master.commands.call('views.flows.duplicate', [copy])
+        copy.request.path += ('?timestamp=%.3f' % time.time())
+        ctx.master.commands.call('replay.client', [copy])
+        logging.warning('killing flow for "wrong" answer')
         flow.kill()
