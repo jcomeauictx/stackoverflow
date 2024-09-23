@@ -18,7 +18,8 @@ endif
 	$(PYLINT) $<
 %.doctest: %.py
 	$(DOCTEST) $<
-all: $(LINT) $(TEST) serve proxy wait test stop
+# run stop before as well as after, in case error caused `make` to fail
+all: $(LINT) $(TEST) stop serve proxy wait test stop
 fast: serve test
 serve: server.py
 	$(PYTHON) $< 2>&1 | tee server.log &
@@ -28,8 +29,18 @@ wait:
 test:
 	-$(WGET) http://localhost:8000/
 stop:
-	-kill $$(lsof -t -itcp:8080 -s tcp:listen)  # kill mitmdump
-	-kill $$(lsof -t -itcp:8000 -s tcp:listen)  # kill webserver
+	# kill mitmdump if running
+	if [ "$$(lsof -t -itcp:8080 -s tcp:listen)" ]; then \
+	 kill $$(lsof -t -itcp:8080 -s tcp:listen); \
+	else \
+	 echo mitmdump was already not running >&2; \
+	fi
+	# kill webserver if running
+	if [ "$$(lsof -t -itcp:8000 -s tcp:listen)" ]; then \
+	 kill $$(lsof -t -itcp:8000 -s tcp:listen); \
+	else \
+	 echo webserver was already not running >&2; \
+	fi
 proxy:
 	# mitmdump using default listen-port 8080
 	$(MITMDUMP) --anticache \
