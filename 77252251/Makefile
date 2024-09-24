@@ -26,7 +26,9 @@ serve: server.py
 wait:
 	@echo giving server and/or mitmproxy a chance to start...
 	@sleep 1
-test:
+test:  # one fetch for each strategy we want to test
+	-$(WGET) http://localhost:8000/
+	-$(WGET) http://localhost:8000/
 	-$(WGET) http://localhost:8000/
 stop:
 	# kill mitmdump if running
