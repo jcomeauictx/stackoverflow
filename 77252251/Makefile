@@ -10,7 +10,7 @@ DOCTEST := $(PYTHON) -m doctest
 PROXY := localhost:8080
 WGET := http_proxy=$(PROXY) wget -v -O-
 FILTER ?= filter.py
-TESTS = 3  # one for each strategy
+TESTS = 2  # one for each strategy
 ifneq ($(SHOWENV),)
  export
 else

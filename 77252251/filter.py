@@ -11,41 +11,24 @@ object which can then be .read().
 import sys, os, time, logging  # pylint: disable=multiple-imports
 from http import HTTPStatus
 from urllib.request import urlopen
-from mitmproxy import http, ctx
-from mitmproxy.script import concurrent
+from mitmproxy import http
 
 # NOTE: using anything lower than WARNING level in logging will not work
 # with mitmproxy, unless further configuration is done
 COMMAND = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 logging.warning('COMMAND: %s', COMMAND)
-STRATEGIES = ['request', 'redirect', 'copyflow']
+STRATEGIES = ['request', 'redirect']
 INDEX = 0
 
 # pylint: disable=consider-using-f-string
-# concurrent needed only for copyflow, but hopefully won't break others
-try:
-    @concurrent
-    def request(flow: http.HTTPFlow):
-        '''
-        filter requests
-        '''
-        strategy = STRATEGIES[INDEX]
-        logging.warning('request for path: %s, replay: %s, strategy: %s',
-                      flow.request.path, flow.is_replay, strategy)
-        logging.warning('flow: %s', oneline(flow))
-        if strategy == 'copyflow':
-            # queue another request in case this one's response is unsuitable
-            copy = flow.copy()
-            if 'view' in ctx.master.addons:
-                logging.warning('duplicating flow in view')
-                ctx.master.commands.call('views.flows.duplicate', [copy])
-            copy.request.path = timestamp(copy.request.path)
-            ctx.master.commands.call('replay.client', [copy])
-except NotImplementedError:
-    if COMMAND == 'doctest':
-        logging.error('concurrent decorator not supported during doctests')
-    else:
-        raise
+def request(flow: http.HTTPFlow):
+    '''
+    filter requests
+    '''
+    strategy = STRATEGIES[INDEX]
+    logging.warning('request for path: %s, replay: %s, strategy: %s',
+                  flow.request.path, flow.is_replay, strategy)
+    logging.warning('flow: %s', oneline(flow))
 
 def response(flow: http.HTTPFlow):
     '''
@@ -80,14 +63,6 @@ def response(flow: http.HTTPFlow):
                     answer = instream.read()
             flow.response.content = answer
             next_strategy()
-        case 'copyflow':
-            logging.warning('ignoring response %r during copyflow strategy',
-                            flow.response.content)
-            flow.response = http.Response.make(
-                HTTPStatus.CREATED,
-                b'',
-                {'content-type': 'text/plain'}
-            )
     return
 
 def timestamp(path, remove=False):
