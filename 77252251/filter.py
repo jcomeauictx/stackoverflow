@@ -10,6 +10,7 @@ object which can then be .read().
 '''
 import time, logging  # pylint: disable=multiple-imports
 from http import HTTPStatus
+from urllib.request import urlopen
 try:
     from mitmproxy import http, ctx
 except (ImportError, ModuleNotFoundError):  # for doctests
@@ -18,7 +19,7 @@ except (ImportError, ModuleNotFoundError):  # for doctests
     http = type('', (), {'HTTPFlow': None})
     ctx = type('', (), {})
 
-STRATEGIES = ['redirect', 'copyflow']
+STRATEGIES = ['redirect', 'copyflow', 'request']
 STATE = {
     # global for saved state
     'index': 0,  # increment to try different strategies
@@ -30,21 +31,22 @@ def request(flow: http.HTTPFlow):
     '''
     filter requests
     '''
-    logging.warning('request for path: %s, replay: %s',
-                  flow.request.path, flow.is_replay)
+    logging.warning('request for path: %s, replay: %s, strategy: %s',
+                  flow.request.path, flow.is_replay, STATE['strategy'])
     logging.warning('flow: %s', oneline(flow))
 
 def response(flow: http.HTTPFlow):
     '''
     filter responses
     '''
-    logging.warning('response for path: %s, replay: %s',
-                  flow.request.path, flow.is_replay)
+    logging.warning('response for path: %s, replay: %s, strategy: %s',
+                  flow.request.path, flow.is_replay, STATE['strategy'])
     logging.warning('flow: %s', oneline(flow))
     if len(flow.response.content.rstrip()) > 1:
         logging.warning('returning response %s to client', oneline(flow))
         # remove timestamp
         flow.request.path = timestamp(flow.request.path, remove=True)
+        next_strategy()
     elif STATE['strategy'] == 'redirect':
         redirect = timestamp(flow.request.path)
         flow.response = http.Response.make(
@@ -52,6 +54,15 @@ def response(flow: http.HTTPFlow):
             '<a href="%s">%s</a>' % (redirect, redirect),
             {'content-type': 'text/html', 'location': redirect}
         )
+    elif STATE['strategy'] == 'request':
+        # use Python standard library urllib.request.urlopen
+        answer = flow.response.content
+        while len(answer.rstrip()) < 2:
+            flow.request.path = timestamp(flow.request.path)
+            with urlopen(flow.request.url) as instream:
+                answer = instream.read()
+        flow.response.content = answer
+        next_strategy()
     else:
         copy = flow.copy()
         copy.response = None
@@ -79,3 +90,10 @@ def oneline(something):
     '''
     string = str(something)
     return string.replace('\n', '').replace('\r', '')
+
+def next_strategy():
+    '''
+    try another strategy to see if it works
+    '''
+    STATE['strategy'] = STRATEGIES[STATE['index']]
+    STATE['index'] = (STATE['index'] + 1) % len(STRATEGIES)
