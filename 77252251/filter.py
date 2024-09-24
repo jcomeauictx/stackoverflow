@@ -65,7 +65,7 @@ def response(flow: http.HTTPFlow):
             redirect = timestamp(flow.request.path)
             flow.response = http.Response.make(
                 HTTPStatus.FOUND,
-                '<a href="%s">%s</a>' % (redirect, redirect),
+                ('<a href="%s">%s</a>' % (redirect, redirect)).encode(),
                 {'content-type': 'text/html', 'location': redirect}
             )
         case 'request':
@@ -82,6 +82,11 @@ def response(flow: http.HTTPFlow):
         case 'copyflow':
             logging.warning('ignoring response %r during copyflow strategy',
                             flow.response.content)
+            flow.response = http.Response.make(
+                HTTPStatus.CONTINUE,
+                b'',
+                {'content-type': 'text/plain'}
+            )
     return
 
 def timestamp(path, remove=False):
