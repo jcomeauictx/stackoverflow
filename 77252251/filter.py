@@ -13,11 +13,15 @@ from http import HTTPStatus
 from urllib.request import urlopen
 try:
     from mitmproxy import http, ctx
+    from mitmproxy.script import concurrent
 except (ImportError, ModuleNotFoundError):  # for doctests
     logging.warning('simulating mitmproxy for doctests')
     # pylint: disable=invalid-name
     http = type('', (), {'HTTPFlow': None})
     ctx = type('', (), {})
+    def concurrent(function):  # pylint: disable=unused-argument
+        'simulated decorator'
+        return None
 
 STRATEGIES = ['redirect', 'copyflow', 'request']
 STATE = {
@@ -35,6 +39,7 @@ def request(flow: http.HTTPFlow):
                   flow.request.path, flow.is_replay, STATE['strategy'])
     logging.warning('flow: %s', oneline(flow))
 
+@concurrent  # needed only for copyflow, but hopefully won't break others
 def response(flow: http.HTTPFlow):
     '''
     filter responses

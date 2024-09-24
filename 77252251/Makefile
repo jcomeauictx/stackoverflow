@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-PATH := /bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+PATH := /usr/bin:/usr/sbin:/usr/local/bin
 SOURCES := $(wildcard *.py)
 LINT := $(SOURCES:.py=.pylint)
 TEST := $(SOURCES:.py=.doctest)
