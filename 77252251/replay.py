@@ -1,10 +1,13 @@
-# https://docs.mitmproxy.org/stable/addons-examples/#duplicate-modify-replay
-"""Take incoming HTTP requests and replay them with modified parameters."""
+'''
+https://docs.mitmproxy.org/stable/addons-examples/#duplicate-modify-replay
+'''
 
 from mitmproxy import ctx
 
-
 def request(flow):
+    """
+    Take incoming HTTP requests and replay them with modified parameters.
+    """
     # Avoid an infinite loop by not replaying already replayed requests
     if flow.is_replay == "request":
         return

@@ -9,6 +9,8 @@ MITMDUMP := $(shell which mitmdump false | head -n 1)
 DOCTEST := $(PYTHON) -m doctest
 PROXY := localhost:8080
 WGET := http_proxy=$(PROXY) wget -v -O-
+FILTER ?= filter.py
+TESTS = 3  # one for each strategy
 ifneq ($(SHOWENV),)
  export
 else
@@ -20,17 +22,17 @@ endif
 	$(DOCTEST) $<
 # run stop before as well as after, in case error caused `make` to fail
 all: $(LINT) $(TEST) stop serve proxy wait test stop
-fast: serve test
+fast: stop serve proxy test stop
 serve: server.py
 	$(PYTHON) $< 2>&1 | tee server.log &
 wait:
 	@echo giving server and/or mitmproxy a chance to start...
 	@sleep 1
 test:  # one fetch for each strategy we want to test
-	-$(WGET) http://localhost:8000/
-	-$(WGET) http://localhost:8000/
-	-$(WGET) http://localhost:8000/
-stop:
+	-for test in $$(seq 1 $(TESTS)); do \
+	 $(WGET) http://localhost:8000/; \
+	done
+stop: .FORCE
 	# kill mitmdump if running
 	if [ "$$(lsof -t -itcp:8080 -s tcp:listen)" ]; then \
 	 kill $$(lsof -t -itcp:8080 -s tcp:listen); \
@@ -48,7 +50,7 @@ proxy:
 	$(MITMDUMP) --anticache \
 	 --anticomp \
 	 --listen-host localhost \
-	 --scripts filter.py \
+	 --scripts $(FILTER) \
 	 --flow-detail 3 \
 	 --save-stream-file mitmproxy.log &>mitmdump.log &
 env:
@@ -57,3 +59,6 @@ ifeq ($(SHOWENV),)
 else
 	$@
 endif
+test_replay:
+	$(MAKE) FILTER=replay.py TESTS=1 stop serve proxy wait test stop
+.FORCE:
