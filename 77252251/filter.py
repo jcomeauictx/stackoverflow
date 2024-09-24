@@ -83,7 +83,7 @@ def response(flow: http.HTTPFlow):
             logging.warning('ignoring response %r during copyflow strategy',
                             flow.response.content)
             flow.response = http.Response.make(
-                HTTPStatus.PARTIAL_CONTENT,
+                HTTPStatus.CREATED,
                 b'',
                 {'content-type': 'text/plain'}
             )
