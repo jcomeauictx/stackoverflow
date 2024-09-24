@@ -60,6 +60,8 @@ try:
                 answer = flow.response.content
                 while len(answer.rstrip()) < 2:
                     flow.request.path = timestamp(flow.request.path)
+                    logging.warning('making followup request to %s',
+                                    flow.request.path)
                     with urlopen(flow.request.url) as instream:
                         answer = instream.read()
                 flow.response.content = answer
