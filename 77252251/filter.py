@@ -76,7 +76,7 @@ try:
                 ctx.master.commands.call('replay.client', [copy])
                 # killing flow at this point will cause client to shut down.
                 # we could instead try `.intercept()`
-                flow.intercept()
+                #flow.intercept()
         return
 except NotImplementedError:
     if COMMAND == 'doctest':
