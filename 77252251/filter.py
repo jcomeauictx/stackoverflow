@@ -29,10 +29,11 @@ try:
         '''
         filter requests
         '''
+        strategy = STRATEGIES[INDEX]
         logging.warning('request for path: %s, replay: %s, strategy: %s',
-                      flow.request.path, flow.is_replay, STRATEGIES[INDEX])
+                      flow.request.path, flow.is_replay, strategy)
         logging.warning('flow: %s', oneline(flow))
-        if STRATEGIES[INDEX] == 'copyflow':
+        if strategy == 'copyflow':
             # queue another request in case this one's response is unsuitable
             copy = flow.copy()
             if 'view' in ctx.master.addons:
@@ -50,10 +51,10 @@ def response(flow: http.HTTPFlow):
     '''
     filter responses
     '''
-    logging.warning('response for path: %s, replay: %s, strategy: %s',
-                  flow.request.path, flow.is_replay, STRATEGIES[INDEX])
-    logging.warning('flow: %s', oneline(flow))
     strategy = STRATEGIES[INDEX]
+    logging.warning('response for path: %s, replay: %s, strategy: %s',
+                  flow.request.path, flow.is_replay, strategy)
+    logging.warning('flow: %s', oneline(flow))
     if len(flow.response.content.rstrip()) > 1:
         logging.warning('returning response %s to client', oneline(flow))
         # remove timestamp
